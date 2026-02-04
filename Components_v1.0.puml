@@ -1,0 +1,71 @@
+@startuml
+title Видеохостинг - Диаграмма компонентов
+
+skinparam ComponentStyle rectangle
+skinparam Shadowing false
+
+' 1. Клиентский уровень
+package "Client layer" {
+    component "Web UI" as UI
+    component "Video Player" as VideoPlayer
+}
+' 2. Backend
+package "Backend API layer" {
+    component "API Gateway" as API
+}
+' 3. Сервисы
+package "Services" {
+    component "Auth Service" as AuthService
+    component "User" as UserService
+    component "Video Management Service" as VideoManagementService
+    component "Search Service" as SearchService
+    component "Streaming Service" as StreamingService
+    component "Like Service" as LikeService
+    component "Comment Service" as CommentService
+    component "Statistics Service" as StatisticsService
+}
+' 4. Обработка видео
+package "Video processing" {
+    component "Upload Service" as UploadService
+    component "Transcoding Service" as TranscodingService
+    component "Message Queue" as MQ
+}
+' 5. Инфраструктура
+package "Infrastructure" {
+    component "User DB" as UserDB
+    component "Video Metadata DB" as MetadataDB
+    component "Object Storage" as ObjectStorage
+    component "CDN" as CDN
+}
+' Client layer interactions
+UI --> API : HTTPS / REST
+VideoPlayer --> StreamingService : stream request
+' API interactions
+API --> AuthService
+API --> UserService
+API --> VideoManagementService
+API --> SearchService
+API --> StreamingService
+API --> LikeService
+API --> CommentService
+API --> StatisticsService
+API --> UploadService
+' Service interactions
+AuthService --> UserDB
+UserService --> UserDB
+VideoManagementService --> MetadataDB
+VideoManagementService --> ObjectStorage
+VideoManagementService --> MQ
+SearchService --> MetadataDB
+LikeService --> MetadataDB
+CommentService --> MetadataDB
+StatisticsService --> MetadataDB
+' Video processing
+UploadService --> ObjectStorage
+TranscodingService --> ObjectStorage
+TranscodingService --> CDN
+MQ --> TranscodingService
+' Streaming
+StreamingService --> CDN
+StreamingService --> MetadataDB
+@enduml

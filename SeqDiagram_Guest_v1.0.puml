@@ -1,0 +1,104 @@
+@startuml
+title Видеохостинг - Диаграмма взаимодействия UC1.1.1 Найти видео на платформе и UC1.1.2 Просмотреть видео
+actor "Гость" as Guest
+' 1. Клиентский уровень
+box "Client layer"
+    participant "Web UI" as UI
+    participant "Video Player" as VideoPlayer
+end box
+' 2. Backend
+box "Backend API layer"
+    participant "API Gateway" as API
+end box
+' 3. Сервисы
+box "Services"
+    participant "Auth Service" as AuthService
+    participant "User Service" as UserService
+    participant "Video Management Service" as VideoManagementService
+    participant "Search Service" as SearchService
+    participant "Streaming Service" as StreamingService
+    participant "Statistics Service" as StatisticsService
+end box
+' 5. Инфраструктура
+box "Infrastructure"
+    participant "User DB" as UserDB
+    participant "Video Metadata DB" as MetadataDB
+    participant "CDN" as CDN
+end box
+
+==UC1.1.1 Найти видео на платформе==
+
+autonumber 1.1
+
+Guest -> UI : Открыть страницу поиска
+UI --> Guest : Отобразить страницу поиска
+
+Guest -> UI : Ввести поисковый запрос и нажать "Поиск"
+UI -> API : GET /api/search?q={query}
+
+API -> SearchService : searchVideos(query)
+SearchService -> MetadataDB : findVideos(query)
+MetadataDB --> SearchService : Список видео, статусы
+SearchService --> API : Результаты поиска
+
+API --> UI : Результаты поиска
+UI --> Guest : Отобразить список найденных видео
+
+==UC1.1.2 Просмотреть видео==
+
+autonumber 2.1
+
+Guest -> UI : Выбрать видео
+UI -> API : GET /api/videos/{videoid}
+
+API -> VideoManagementService : Запросить основную информацию getVideoInfo
+VideoManagementService -> MetadataDB : Чтение метаданных видео
+MetadataDB --> VideoManagementService : Данные видео (автор, название, статус)
+VideoManagementService -> API : Информация о видео
+
+API -> StreamingService : Запросить URL для воспроизведения (getPlaybackUrl)
+StreamingService -> MetadataDB : Проверить доступные битрейты
+MetadataDB --> StreamingService : Список битрейтов
+StreamingService -> CDN : Сформировать signed URL для master.m3u8
+CDN --> StreamingService : URL потока
+StreamingService --> API : Плейбэк данный (URL, качество)
+
+API --> UI : Ответ с метаданными и URL потока
+
+UI -> CDN : Запрос видеопотока
+CDN --> UI : Видеопоток
+UI -> VideoPlayer : Инициализация плеера с URL
+VideoPlayer --> Guest : Начинает воспроизведение
+
+UI -> API : POST /api/videos/{videoId}/view
+API -> StatisticsService : Зарегистрировать просмотр (registerView)
+StatisticsService -> MetadataDB : Инкремент счетчик просмотров incrementViews(videoId)
+
+==UC1.1.3 Зарегистрировать аккаунт==
+
+autonumber 3.1
+
+Guest -> UI : Открыть страницу регистрации
+UI --> Guest : Отобразить страницу регистрации
+
+Guest -> UI : Ввести регистрационные данные и нажать "Зарегистрироваться"
+UI -> API : POST /register (registration data)
+
+API -> AuthService : validateRegistrationData()
+
+alt Данные некорректны
+    AuthService --> API : Ошибка валидации
+    API --> UI : 400 BAD Request + сообщение
+    UI --> Guest : Показать ошибку пользователю
+else Данные корректны
+    AuthService -> AuthService : Сгенерировать hash + salt
+    AuthService -> UserService : Создать пользователя (email, hash, salt, name)
+    UserService -> UserDB : INSERT нового пользователя
+    UserDB --> UserService : ID нового пользователя
+    UserService --> AuthService : Успех создания
+    AuthService -> MetadataDB : Создать профиль пользователя (userId, name)
+    AuthService --> API : Успех регистрации, JWT токен
+    API --> UI : 201 Created + токен
+    UI --> Guest : Сообщение "Аккаунт создан"
+end
+@enduml
