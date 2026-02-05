@@ -1,0 +1,67 @@
+@startuml
+title Видеохостинг - Диаграмма взаимодействия UC1.1.1 Найти видео на платформе и UC1.1.2 Просмотреть видео
+actor "Владелец видео" as Author
+' 1. Клиентский уровень
+box "Client layer"
+    participant "Web UI" as UI
+    participant "Video Player" as VideoPlayer
+end box
+' 2. Backend
+box "Backend API layer"
+    participant "API Gateway" as API
+end box
+' 3. Сервисы
+box "Services"
+    participant "Auth Service" as AuthService
+    participant "User Service" as UserService
+    participant "Video Management Service" as VideoManagementService
+    participant "Search Service" as SearchService
+    participant "Streaming Service" as StreamingService
+    participant "Statistics Service" as StatisticsService
+end box
+' 4. Обработка видео
+box "Video processing"
+    participant "Upload Service" as UploadService
+    participant "Transcoding Service" as TranscodingService
+    participant "Message Queue" as MQ
+end box
+' 5. Инфраструктура
+box "Infrastructure"
+    database "User DB" as UserDB
+    database "Video Metadata DB" as MetadataDB
+    participant "Object Storage" as ObjectStorage
+    participant "CDN" as CDN
+end box
+
+==UC2.1.1 Загрузить видео==
+
+autonumber 1.1
+
+Author -> UI : Открыть форму загрузки
+UI -> API : GET /api/upload
+API -> AuthService : checkAuth()
+AuthService -> API : OK
+API --> UI: Предоставить доступ
+UI --> Author : Отобразить форму загрузки
+
+Author -> UI : Выбрать видеофайл
+UI -> API : POST /api/upload/video
+API -> UploadService : videoUpload()
+UploadService --> API : uploadId
+
+loop Загрузка чанков (resumable)
+    UI -> UploadService : uploadchunk(uploadId, chunk)
+    UploadService -> ObjectStorage : saveChanunk()
+end loop
+
+UI -> API : POST /api/video/metadata
+API -> VideoManagementService : saveMetadata()
+VideoManagementService -> MetadataDB : Вставить видеофайл
+
+UploadService -> MQ : publishTrancscodeTask(videoId)
+MQ -> TranscodingService : consume Task
+TranscodingService -> ObjectStorage : read original video
+TranscodingService -> ObjectStorage : save bitrates
+TranscodingService -> CDN : publish video
+
+@enduml
