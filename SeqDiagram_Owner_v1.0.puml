@@ -23,13 +23,13 @@ end box
 box "Video processing"
     participant "Upload Service" as UploadService
     participant "Transcoding Service" as TranscodingService
-    participant "Message Queue" as MQ
+    queue "Message Queue" as MQ
 end box
 ' 5. Инфраструктура
 box "Infrastructure"
     database "User DB" as UserDB
     database "Video Metadata DB" as MetadataDB
-    participant "Object Storage" as ObjectStorage
+    storage "Object Storage" as ObjectStorage
     participant "CDN" as CDN
 end box
 

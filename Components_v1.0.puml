@@ -16,7 +16,7 @@ package "Backend API layer" {
 ' 3. Сервисы
 package "Services" {
     component "Auth Service" as AuthService
-    component "User" as UserService
+    component "User Service" as UserService
     component "Video Management Service" as VideoManagementService
     component "Search Service" as SearchService
     component "Streaming Service" as StreamingService
@@ -28,13 +28,13 @@ package "Services" {
 package "Video processing" {
     component "Upload Service" as UploadService
     component "Transcoding Service" as TranscodingService
-    component "Message Queue" as MQ
+    queue "Message Queue" as MQ
 }
 ' 5. Инфраструктура
 package "Infrastructure" {
-    component "User DB" as UserDB
-    component "Video Metadata DB" as MetadataDB
-    component "Object Storage" as ObjectStorage
+    database "User DB" as UserDB
+    database "Video Metadata DB" as MetadataDB
+    storage "Object Storage" as ObjectStorage
     component "CDN" as CDN
 }
 ' Client layer interactions

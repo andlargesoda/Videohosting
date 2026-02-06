@@ -21,8 +21,8 @@ box "Services"
 end box
 ' 5. Инфраструктура
 box "Infrastructure"
-    participant "User DB" as UserDB
-    participant "Video Metadata DB" as MetadataDB
+    database "User DB" as UserDB
+    database "Video Metadata DB" as MetadataDB
     participant "CDN" as CDN
 end box
 
@@ -49,7 +49,7 @@ UI --> Guest : Отобразить список найденных видео
 autonumber 2.1
 
 Guest -> UI : Выбрать видео
-UI -> API : GET /api/videos/{videoid}
+UI -> API : GET /api/videos/{videoId}
 
 API -> VideoManagementService : Запросить основную информацию getVideoInfo
 VideoManagementService -> MetadataDB : Чтение метаданных видео

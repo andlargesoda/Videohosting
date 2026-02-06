@@ -22,54 +22,139 @@ box "Services"
     participant "Statistics Service" as StatisticsService
 end box
 ' 4. Обработка видео
-participant "Upload Service" as UploadService
-participant "Transcoding Service" as TranscodingService
-participant "Message Queue" as MQ
+box "Video processing"
+    participant "Upload Service" as UploadService
+    participant "Transcoding Service" as TranscodingService
+    queue "Message Queue" as MQ
+end box
 ' 5. Инфраструктура
 box "Infrastructure"
-    participant "User DB" as UserDB
-    participant "Video Metadata DB" as MetadataDB
+    database "User DB" as UserDB
+    database "Video Metadata DB" as MetadataDB
     participant "Object Storage" as ObjectStorage
     participant "CDN" as CDN
 end box
 
-==UC3.1.1 Войти в личный кабинет==
+===UC3.1.1 Войти в личный кабинет===
 
 autonumber 1.1
+
+==Открытие формы входа==
 
 Viewer -> UI : Открыть страницу входа
 UI --> Viewer : Отобразить страницу входа
 
+==Ввод данных==
+
 Viewer -> UI : Ввести данные для входа и подтвердить вход
-UI -> API : 
+UI -> API : POST /api/auth/login
+
+==Аутентификация==
+
 API -> AuthService : checkAuth()
-AuthService --> API : OK
-API -->
+AuthService -> UserDB : Получить пользователя
+UserDB --> AuthService : User + password_hash
 
-UI -> API : GET /api/upload
+AuthService -> AuthService : Проверка пароля (hash + salt)
+
+alt Данные корректны
+    AuthService -> AuthService : Сформировать JWT
+    Auth --> API : JWT + роль
+    API --> UI : 200 OK (JWT)
+    UI -> UI : Сохранить JWT (cookie / storage)
+    UI --> Viewer : Доступ предоставлен
+else Данные некорректны
+    AuthService --> API : Ошибка аутентификации
+    API --> UI : 401 Unauthorized
+    UI --> Viewer : Сообщение об ошибке
+end
+
+===UC3.1.2 Выйти из личного кабинета===
+
+==Инициация выхода==
+
+Viewer -> UI : Нажать "Выход"
+UI -> API : POST /api/auth/logout
+
+==Завершение сессии==
+
+API -> AuthService : invalidateToken(JWT)
+AuthService --> API : 200 OK
+API --> UI : 200 OK
+UI -> UI : Удалить JWT
+UI --> Viewer : Перенаправление на главную страницу
+
+===UC3.1.3 / UC3.1.4 Добавить и отозвать лайк к видео======
+
+==Открытие видео==
+
+Viewer -> UI : Выбрать видео
+UI -> API : GET /api/videos/{videoId}
+
+==Добавление / отзыв лайка==
+
+Viewer -> UI : Нажать "Лайк"
+UI -> API : POST /api/videos/{videoId}/like
 API -> AuthService : checkAuth()
-AuthService -> API : OK
-API --> UI: Предоставить доступ
-UI --> Author : Отобразить форму загрузки
+AuthService --> API : 200 OK
 
-Author -> UI : Выбрать видеофайл
-UI -> API : POST /api/upload/video
-API -> UploadService : videoUpload()
-UploadService --> API : uploadId
+alt Лайка еще нет
+    API -> LikeService : addLike(userId, videoId)
+    LikeService -> MetadataDB : insert like
+    LikeService -> MetadataDB : increment likesCount
+    LikeService --> API : likeAdded
+    API --> UI: Счетчик лайков обновлен
+    UI --> Viewer : Лайк добавлен
+else Лайк уже есть
+    API -> LikeService : removeLike(userId, videoId)
+    LikeService -> MetadataDB : delete like
+    LikeService -> MetadataDB : decrement likesCount
+    LikeService --> API : likeRemoved
+    API --> UI: Счетчик лайков обновлен
+    UI --> Viewer : Лайк удален
+end
 
-loop Загрузка чанков (resumable)
-    UI -> UploadService : uploadchunk(uploadId, chunk)
-    UploadService -> ObjectStorage : saveChanunk()
-end loop
+===UC3.1.5 / UC3.1.6 Добавить и удалить комментарий к видео======
 
-UI -> API : POST /api/video/metadata
-API -> VideoManagementService : saveMetadata()
-VideoManagementService -> MetadataDB : Вставить видеофайл
+==Открытие видео==
 
-UploadService -> MQ : publishTrancscodeTask(videoId)
-MQ -> TranscodingService : consume Task
-TranscodingService -> ObjectStorage : read original video
-TranscodingService -> ObjectStorage : save bitrates
-TranscodingService -> CDN : publish video
+Viewer -> UI : Выбрать видео
+UI -> API : GET /api/videos/{videoId}
+
+==Добавление комментария==
+
+Viewer -> UI : Ввести комментарий
+UI -> API : POST /api/videos/{videoId}/comment
+API -> AuthService : checkAuth()
+AuthService --> API : 200 OK
+
+CommentService -> CommentService : validate(commentText)
+
+alt Комментарий корректный
+    API -> CommentService : addComment(userId, videoId, commentText)
+    CommentService -> MetadataDB : insert comment
+    CommentService --> API : commentAdded
+    API --> UI: Отобразить комментарий
+    UI --> Viewer : Отобразить комментарий
+else Комментарий пустой
+    API -> UI : Ошибка валидации
+
+==Удаление комментария==
+
+Viewer -> UI : Удалить комментарий
+UI -> API : DELETE /api/videos/{videoId}/comment/{commentId}
+API -> AuthService : checkAuth()
+AuthService --> API : 200 OK
+
+API -> CommentService : checkOwnership(userId, commentId)
+CommentService -> MetadataDB : find comment
+
+alt Комментарий принадлежит зрителю
+    CommentService -> MetadataDB : Удалить комментарий
+    CommentService --> API : commentDeleted
+    API --> UI : Комментарий удален
+    UI --> Viewer : Комментарий удален
+else Комментарий не принадлежит зрителю
+    API -> UI : Ошибка доступа
 
 @enduml
