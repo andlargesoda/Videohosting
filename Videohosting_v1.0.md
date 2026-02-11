@@ -579,11 +579,11 @@ BPMN-диаграмма приведена по ссылке:
 |Имя                      |Тип                                              |Описание поля                                          |
 |:------------------------|:------------------------------------------------|:------------------------------------------------------|
 |user_id                  |integer                                          |уникальный идентификатор пользователя (PK)             |
-|email                    |string                                           |адрес электронной почты (уникальный)                   |
-|password_hash            |string                                           |хэш пароля пользователя                                |
+|user_email               |string                                           |адрес электронной почты (уникальный)                   |
+|user_password_hash       |string                                           |хэш пароля пользователя                                |
 |username                 |string                                           |логин пользователя                                     |
-|role                     |enum (Author, Viewer)                            |роль пользователя (Владелец видео, Зритель)            |
-|created_at               |datetime                                         |дата и время регистрации пользователя                  |
+|user_role                |enum (Author, Viewer)                            |роль пользователя (Владелец видео, Зритель)            |
+|user_created_at          |datetime                                         |дата и время регистрации пользователя                  |
 
 **Видео /videos**
 
@@ -591,15 +591,15 @@ BPMN-диаграмма приведена по ссылке:
 |:------------------------|:------------------------------------------------|:------------------------------------------------------|
 |video_id                 |integer                                          |уникальный идентификатор видео (PK)                    |
 |author_id                |integer                                          |идентификатор владельца видео (user_id, FK)            |
-|name                     |string                                           |название видео                                         |
-|descriprion              |string                                           |описание видео                                         |
-|duration                 |string                                           |продолжительность                                      |
-|status                   |enum (active/deleted/block)                      |статус видео (активно/удалено/заблокировано)           |
-|views_count              |integer                                          |общее кол-во просмотров                                |
-|likes_count              |integer                                          |общее кол-во лайков                                    |
-|age_restriction          |integer                                          |возрастное ограничение                                 |
-|created_at               |datetime                                         |дата и время загрузки видео                            |
-|updated_at               |datetime                                         |дата и время последнеого изменения видео               |
+|video_name               |string                                           |название видео                                         |
+|video_description        |string                                           |описание видео                                         |
+|video_duration           |string                                           |продолжительность видео                                |
+|video_status             |enum (active/deleted/block)                      |статус видео (активно/удалено/заблокировано)           |
+|video_views_count        |integer                                          |общее кол-во просмотров  видео                         |
+|video_likes_count        |integer                                          |общее кол-во лайков видео                              |
+|video_age_restriction    |integer                                          |возрастное ограничение видео                           |
+|video_created_at         |datetime                                         |дата и время загрузки видео                            |
+|video_updated_at         |datetime                                         |дата и время последнеого изменения видео               |
 
 **Видеофайлы /videofiles**
 
@@ -609,9 +609,9 @@ BPMN-диаграмма приведена по ссылке:
 |video_id                 |integer                                          |идентификатор видео (FK)                               |
 |videofile_path           |string                                           |путь до видеофайла                                     |
 |videofile_size           |integer                                          |размер видеофайла                                      |
-|format                   |string                                           |формат                                                 |
-|resolution               |string                                           |разрешение                                             |
-|created_at               |datetime                                         |дата и время создания                                  |
+|videofile_format         |string                                           |формат видеофайла                                      |
+|original_resolution      |string                                           |разрешение оригинального видеофайла                    |
+|videofile_created_at     |datetime                                         |дата и время создания записи о видеофайле              |
 
 **Битрейты /bitrates**
 
@@ -619,10 +619,10 @@ BPMN-диаграмма приведена по ссылке:
 |:------------------------|:------------------------------------------------|:------------------------------------------------------|
 |bitrate_id               |integer                                          |уникальный идентификатор битрейта (PK)                 |
 |video_id                 |integer                                          |идентификатор видео (FK)                               |
-|resolution               |enum (240p/360p/480p/720p/1080p/1440p/2160p)     |разрешение видео                                       |
-|bitrate                  |integer                                          |размер битрейта (кбит/с)                               |
-|file_path                |string                                           |путь до файла битрейта                                 |
-|status                   |enum (processing/ready/failed)                   |статус генерации                                       |
+|stream_resolution        |enum (240p/360p/480p/720p/1080p/1440p/2160p)     |разрешение конкретной адаптивной версии                |
+|bitrate_size             |integer                                          |размер битрейта (кбит/с)                               |
+|bitrate_file_path        |string                                           |путь до файла битрейта                                 |
+|bitrate_status           |enum (processing/ready/failed)                   |статус генерации                                       |
 
 **Просмотры /views**
 
@@ -649,8 +649,8 @@ BPMN-диаграмма приведена по ссылке:
 |user_id                  |integer                                          |идентификатор автора комментария (FK)                  |
 |video_id                 |integer                                          |идентификатор видео (FK)                               |
 |comment_text             |string                                           |текст комментария                                      |
-|created_at               |datetime                                         |дата и время добавления комментария                    |
-|deleted_at               |datetime                                         |дата и время удаления комментария (NULL для активного комментария)|
+|comment_created_at       |datetime                                         |дата и время добавления комментария                    |
+|comment_deleted_at       |datetime                                         |дата и время удаления комментария (NULL для активного комментария)|
 
 ### Взаимодействие с API
 
