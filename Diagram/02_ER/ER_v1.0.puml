@@ -1,0 +1,90 @@
+@startuml
+
+entity user {
+    --Атрибуты--
+    user_id : integer <<PK>>
+    --
+    email : string      
+    password_hash : string      
+    username : string  
+    role : enum
+    created_at : datetime    
+}
+
+entity video {
+    --Атрибуты--
+    video_id : integer <<PK>>
+    --
+    author_id : integer <<FK>>
+    name : string  
+    descriprion : string  
+    duration : string  
+    status : enum    
+    views_count : integer 
+    likes_count : integer 
+    age_restriction : integer 
+    created_at : datetime
+    updated_at : datetime
+}
+
+entity videofile {
+    --Атрибуты--
+    videofile_id : integer <<PK>>
+    --
+    video_id : integer <<FK>>    
+    videofile_path : string  
+    videofile_size : integer    
+    format : string  
+    resolution : string  
+    created_at : datetime
+}
+
+entity bitrate {
+    --Атрибуты--
+    bitrate_id : integer <<PK>>
+    --
+    video_id : integer <<FK>>
+    resolution : string 
+    bitrate : integer
+    file_path : string 
+    status : enum   
+}
+
+entity view {
+    --Атрибуты--
+    view_id : integer <<PK>>
+    --
+    user_id : integer <<FK>>    
+    video_id : integer <<FK>>    
+    viewed_at : datetime
+}
+
+entity like {
+    --Атрибуты--
+    user_id : integer <<FK>>    
+    video_id : integer <<FK>>   
+    liked_at : datetime
+}
+
+entity comment {
+    --Атрибуты--
+    comment_id : integer <<PK>>
+    --
+    user_id : integer <<FK>>   
+    video_id : integer <<FK>>
+    comment_text : string    
+    created_at : datetime
+    deleted_at : datetime
+}
+
+user ||--o{ video : owns
+video ||--|| videofile
+video ||--o{ bitrate
+user ||--o{ view
+video ||--o{ view
+user ||--o{ like
+video ||--o{ like
+user ||--o{ comment
+video ||--o{ comment
+
+@enduml
