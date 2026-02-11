@@ -1,0 +1,275 @@
+openapi: '3.0.3'
+info:
+  title: API Videohosting
+  description: Описание API платформы видеохостинга.
+  termsOfService: https://api.videohost.ru/v1/terms
+  contact:
+    name: Команда поддержки
+    url: https://api.videohost.ru/v1/support
+    email: support@videohost.ru
+  license:
+    name: license
+    url: https://api.videohost.ru/v1/license
+  version: '1.0'
+servers:
+  - url: https://api.dev.videohost.ru/v1
+    description: Сервер API среды разработки
+  - url: https://api.test.videohost.ru/v1
+    description: Сервер API среды тестирования
+  - url: https://api.preprod.videohost.ru/v1
+    description: Сервер API среды предпродуктивной
+  - url: https://api.videohost.ru/v1
+    description: Сервер API среды продуктивной
+components:
+  schemas:
+    user:
+      type: object
+      required:
+        - user_id
+        - email
+        - password_hash
+        - username
+        - role
+        - user_created_at
+      properties:
+        user_id:
+          $ref: "#/components/schemas/user_id"    
+        email:
+          $ref: "#/components/schemas/email"        
+        password_hash:
+          $ref: "#/components/schemas/password_hash"  
+        username:
+          $ref: "#/components/schemas/username"  
+        role:
+          $ref: "#/components/schemas/role"         
+        user_created_at:
+          $ref: "#/components/schemas/user_created_at"     
+    user_id:
+      type: integer
+      format: int64
+      description: уникальный идентификатор пользователя (PK) 
+      example: 1 
+      readOnly: true
+    email:
+      type: string
+      format: email
+      description: адрес электронной почты (уникальный)
+      minLength: 5
+      maxLength: 255
+      example: alex.petrov@example.com     
+    password_hash:
+      type: string
+      format: password
+      description: хэш пароля пользователя
+      minLength: 8
+      maxLength: 128  
+      writeOnly: true
+      example: $2y$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGgaXLl     
+    username:
+      type: string
+      description: логин пользователя
+      writeOnly: true  
+      example: $2y$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGgaXLl     
+    role:
+      type: string
+      description: роль пользователя (Владелец видео, Зритель) 
+      enum: [Author, Viewer] 
+      example: Viewer     
+    user_created_at:
+      type: string
+      format: date-time
+      description: дата и время регистрации пользователя
+      example: 2024-01-15 14:30:00
+      readOnly: true
+    video:
+      type: object
+      required:
+        - video_id
+        - author_id
+        - name
+        - status
+        - video_created_at
+      properties:
+        video_id:
+          $ref: "#/components/schemas/user_id"
+        author_id:
+          $ref: "#/components/schemas/author_id"
+        name:
+          $ref: "#/components/schemas/name"
+        descriprion:
+          $ref: "#/components/schemas/description"
+        duration:
+          $ref: "#/components/schemas/duration"
+        status:
+          $ref: "#/components/schemas/status"
+        views_count:
+          $ref: "#/components/schemas/views_count"
+        likes_count:
+          $ref: "#/components/schemas/likes_count"
+        age_restriction:
+          $ref: "#/components/schemas/age_restriction"
+        video_created_at:
+          $ref: "#/components/schemas/video_created_at"
+        video_updated_at: 
+          $ref: "#/components/schemas/video_updated_at"    
+    video_id:
+      type: integer
+      format: int64
+      description: уникальный идентификатор видео (PK)
+      example: 1001    
+      readOnly: true
+    author_id:
+      type: integer
+      format: int64
+      description: идентификатор владельца видео (user_id, FK)
+      example: 501      
+    name:
+      type: string
+      description: название видео
+      minLength: 1
+      maxLength: 255
+      example: "Как работает REST API"      
+    description:
+      type: string
+      description: описание видео
+      maxLength: 2000
+      example: "Подробное объяснение REST и HTTP методов"      
+    duration:
+      type: string
+      description: продолжительность
+      pattern: '^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$'
+      example: "00:12:35"       
+    status:
+      type: string
+      description: статус видео
+      enum: [active, deleted, block]
+      example: active      
+    views_count:
+      type: integer
+      format: int64
+      description: общее кол-во просмотров
+      example: 1250
+      minimum: 0
+      readOnly: true      
+    likes_count:
+      type: integer
+      format: int64
+      description: общее кол-во лайков
+      example: 341
+      minimum: 0
+      readOnly: true       
+    age_restriction:
+      type: integer
+      format: int32
+      description: возрастное ограничение
+      minimum: 0
+      maximum: 21
+      example: 12      
+    video_created_at:
+      type: string
+      format: date-time
+      description: дата и время загрузки видео
+      example: 2026-02-10 14:25:00
+      readOnly: true       
+    video_updated_at:
+      type: string
+      format: date-time
+      description: дата и время последнего изменения видео
+      example: 2026-02-10 15:10:00
+      readOnly: true   
+    videofile:
+      type: object
+      required:
+        - videofile_id
+        - video_id
+        - videofile_path
+        - videofile_size
+        - format
+        - file_created_at
+      properties:
+        videofile_id:
+          $ref: "#/components/schemas/videofile_id"
+        video_id:
+          $ref: "#/components/schemas/video_id"
+        videofile_path:
+          $ref: "#/components/schemas/videofile_path"
+        videofile_size:
+          $ref: "#/components/schemas/videofile_id"
+        format:
+          $ref: "#/components/schemas/videofile_format"
+        resolution:
+          $ref: "#/components/schemas/resolution"
+        file_created_at:
+          $ref: "#/components/schemas/file_created_at"
+    videofile_id:
+      type: integer
+      format: int64
+      description: уникальный идентификатор видеофайла (PK)
+      example: 2001  
+      readOnly: true
+    videofile_path:
+      type: string
+      format: int64
+      description: путь до видеофайла 
+      example: "/videos/2026/02/10/video_1001.mp4"    
+    videofile_size:
+      type: integer
+      format: int64
+      description: размер видеофайла 
+      minimum: 0
+      example: 157286400    
+    videofile_format:
+      type: string
+      description: формат
+      enum: ["mp4", "mov", "avi", "mkv", "webm"]
+      example: "mp4"    
+    resolution:
+      type: string
+      description: разрешение
+      pattern: '^[0-9]{3,4}x[0-9]{3,4}$'  
+      example: "1920x1080"    
+    file_created_at:
+      type: string
+      format: date-time
+      description: дата и время создания записи о видеофайле
+      example: 2026-02-10 14:26:00
+      readOnly: true        
+    name:
+      type: object
+      properties:
+        property:
+          type: integer
+tags:
+  - name: Guest
+    description: Действия незарегистированного пользователя (гость)
+  - name: Author
+    description: Действия авторизированного пользователя (владелец видео)
+  - name: Viewer
+    description: Действия авторизированного пользователя (зритель)
+paths:
+  /videos:
+    get:
+      tags: [Guest]
+      summary: Получение списка видео
+      description: Метод предназначен для получения списка найденных видео с основной информацией и статусом
+      externalDocs:
+        description: 
+        url: https://api.videohost.ru/v1/docs/user-operations
+      operationId: getVideos
+      parameters:
+      - name: name
+        in: path
+        description:
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+
+
+        
+
+
